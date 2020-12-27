@@ -22,7 +22,7 @@
 struct EthIPHeader{
     unsigned char dst_mac[6];
     unsigned char src_mac[6];
-    __be16 eth_type;
+    unsigned short eth_type;
     unsigned char ver_ihl;
     unsigned char tos;   //服务类型
     unsigned short tot_len; //总长度
@@ -43,4 +43,5 @@ public:
     unsigned char* option;
     unsigned char* data;
     EthFrame(unsigned char* buffer);
+    ~EthFrame();
 };
