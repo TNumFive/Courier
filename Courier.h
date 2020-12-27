@@ -37,11 +37,14 @@ struct EthIPHeader{
 
 typedef struct EthIPHeader EthIPHeader;
 
-class EthFrame{
+class EthIPFrame{
 public:
     EthIPHeader header;
     unsigned char* option;
     unsigned char* data;
-    EthFrame(unsigned char* buffer);
-    ~EthFrame();
+    bool isChecked;
+    EthIPFrame(){};//init while do nothing
+    EthIPFrame(unsigned char* buffer,int bufferSize);
+    ~EthIPFrame();
+    int generateFrame(unsigned char* buffer,int bufferLength);
 };
