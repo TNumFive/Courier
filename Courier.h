@@ -43,8 +43,9 @@ public:
     unsigned char* option;
     unsigned char* data;
     bool isChecked;
-    EthIPFrame(){};//init while do nothing
+    EthIPFrame();//init while do nothing
     EthIPFrame(unsigned char* buffer,int bufferSize);
     ~EthIPFrame();
     int generateFrame(unsigned char* buffer,int bufferLength);
 };
+
