@@ -76,7 +76,7 @@ int readIPEthernet(int bufferSize=1600){
             continue;
         }
         EthIPFrame eif(buffer,n);
-        if(eif.header.protocol==1){//not icmp 
+        if(eif.header.protocol==99){//not icmp 
             counter++;
             printf("============================\n");
             printf("~%d\n",counter);
