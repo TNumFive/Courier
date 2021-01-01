@@ -110,7 +110,7 @@ int readIPEthernet(int bufferSize=1600){
             printf("\n");
             printf("============================\n");
         }
-        if(counter>100){
+        if(counter>=100){
             close(sock);
             break;
         }
