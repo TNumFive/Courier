@@ -60,7 +60,6 @@ int readIPEthernet(int bufferSize=1600){
     unsigned char inet[]={192,168,31,36};
     unsigned char ether[]={0x00,0x0c,0x29,0x1f,0x2f,0xf4};
     unsigned char gateway[]={0x40,0x31,0x3c,0x29,0xad,0xd8};
-    unsigned char dns[]={224,0,0,251};
     int sock,n,counter=0;
     unsigned char buffer[bufferSize];
     if(0>(sock=socket(PF_PACKET,SOCK_RAW,htons(ETH_P_IP)))){
@@ -78,6 +77,9 @@ int readIPEthernet(int bufferSize=1600){
             continue;
         }
         EthIPFrame eif(buffer,n);
+        if(eif.header.protocol!=1){//not icmp 
+            continue;
+        }
         printf("============================\n");
         printf("~%d\n",counter);
         printf("dst_mac");
@@ -107,18 +109,7 @@ int readIPEthernet(int bufferSize=1600){
                 printf(".");
             }
         }
-        printf("\n");//224.0.0.251
-        // if((!strncmp((char *)eif.header.dst_addr,(char *)inet,4)&&strncmp((char *)eif.header.dst_mac,(char *)ether,6))
-        //     ||strncmp((char *)eif.header.dst_addr,(char *)dns,4)
-        //     ){
-        //     //send to my mac while not send to my ip
-        //     printf("route this package\n");
-        //     memcpy(eif.header.dst_mac,gateway,6);
-        //     eif.generateFrame(buffer,bufferSize);
-        //     if(-1==sendto(sock,buffer,bufferSize,0,NULL,0)){
-        //         counter=101;
-        //     }
-        // }
+        printf("\n");
         printf("============================\n");
         if(counter>100){
             close(sock);
