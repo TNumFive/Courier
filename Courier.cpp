@@ -77,40 +77,39 @@ int readIPEthernet(int bufferSize=1600){
             continue;
         }
         EthIPFrame eif(buffer,n);
-        if(eif.header.protocol!=1){//not icmp 
-            continue;
-        }
-        printf("============================\n");
-        printf("~%d\n",counter);
-        printf("dst_mac");
-        for(int i=0;i<6;i++){
-            printf(":%02x",eif.header.dst_mac[i]);
-        }
-        printf("\n");
-
-        printf("src_mac");
-        for(int i=0;i<6;i++){
-            printf(":%02x",eif.header.src_mac[i]);
-        }
-        printf("\n");
-
-        printf("src_addr:");
-        for(int i=0;i<4;i++){
-            printf("%d",eif.header.src_addr[i]);
-            if(i!=3){
-                printf(".");
+        if(eif.header.protocol==1){//not icmp 
+            printf("============================\n");
+            printf("~%d\n",counter);
+            printf("dst_mac");
+            for(int i=0;i<6;i++){
+                printf(":%02x",eif.header.dst_mac[i]);
             }
-        }
-        printf("\n");
-        printf("dst_addr:");
-        for(int i=0;i<4;i++){
-            printf("%d",eif.header.dst_addr[i]);
-            if(i!=3){
-                printf(".");
+            printf("\n");
+
+            printf("src_mac");
+            for(int i=0;i<6;i++){
+                printf(":%02x",eif.header.src_mac[i]);
             }
+            printf("\n");
+
+            printf("src_addr:");
+            for(int i=0;i<4;i++){
+                printf("%d",eif.header.src_addr[i]);
+                if(i!=3){
+                    printf(".");
+                }
+            }
+            printf("\n");
+            printf("dst_addr:");
+            for(int i=0;i<4;i++){
+                printf("%d",eif.header.dst_addr[i]);
+                if(i!=3){
+                    printf(".");
+                }
+            }
+            printf("\n");
+            printf("============================\n");
         }
-        printf("\n");
-        printf("============================\n");
         if(counter>100){
             close(sock);
             break;
