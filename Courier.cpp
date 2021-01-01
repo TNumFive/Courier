@@ -108,17 +108,17 @@ int readIPEthernet(int bufferSize=1600){
             }
         }
         printf("\n");//224.0.0.251
-        if((!strncmp((char *)eif.header.dst_addr,(char *)inet,4)&&strncmp((char *)eif.header.dst_mac,(char *)ether,6))
-            ||strncmp((char *)eif.header.dst_addr,(char *)dns,4)
-            ){
-            //send to my mac while not send to my ip
-            printf("route this package\n");
-            memcpy(eif.header.dst_mac,gateway,6);
-            eif.generateFrame(buffer,bufferSize);
-            if(-1==sendto(sock,buffer,bufferSize,0,NULL,0)){
-                counter=101;
-            }
-        }
+        // if((!strncmp((char *)eif.header.dst_addr,(char *)inet,4)&&strncmp((char *)eif.header.dst_mac,(char *)ether,6))
+        //     ||strncmp((char *)eif.header.dst_addr,(char *)dns,4)
+        //     ){
+        //     //send to my mac while not send to my ip
+        //     printf("route this package\n");
+        //     memcpy(eif.header.dst_mac,gateway,6);
+        //     eif.generateFrame(buffer,bufferSize);
+        //     if(-1==sendto(sock,buffer,bufferSize,0,NULL,0)){
+        //         counter=101;
+        //     }
+        // }
         printf("============================\n");
         if(counter>100){
             close(sock);
