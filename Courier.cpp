@@ -1,125 +1,114 @@
 #include "Courier.h"
 
-EthIPFrame::EthIPFrame(){
-    memset(&this->header,0,sizeof(EthIPHeader));
-    this->option=NULL;
-    this->data=NULL;
-    this->isChecked=false;
+EthIPFrame::EthIPFrame()
+{
+    //set everything to zero other than default
+    memset(this, 0, sizeof(EthIPFrame));
 }
 
-EthIPFrame::EthIPFrame(unsigned char* buffer,int bufferSize){
-    if(bufferSize<sizeof(EthIPHeader)){
-        perror("buffer size too small, it must be bigger than 34");
+EthIPFrame::EthIPFrame(unsigned char *frame, unsigned short frameSize)
+{
+    if (frameSize < sizeof(EthIPHeader))
+    {
+        perror("frame size too small, it must be bigger than 34");
+        memset(this, 0, sizeof(EthIPFrame));
         return;
     }
-    memcpy((void*)&this->header,buffer,sizeof(EthIPHeader));
-    int option_len=this->header.ver_ihl&0x0f*4-20;
-    if(option_len>0){
-        this->option=new unsigned char[option_len];
-        memcpy(this->option,&buffer[20],option_len);
-    }else{
-        this->option=NULL;
-    }
-    int data_len=this->header.tot_len-this->header.ver_ihl&0x0f*4;
-    if(data_len>0){
-        this->data=new unsigned char[data_len];
-        memcpy(this->data,&buffer[this->header.ver_ihl&0x0f*4],data_len);
-    }else{
-        this->data=NULL;
-    }
-    this->isChecked=false;
-}
-EthIPFrame::~EthIPFrame(){
-    if(this->option!=NULL){
-        delete [] this->option;
-    }
-    if(this->data!=NULL){
-        delete [] this->data;
-    }
-}
-
-int EthIPFrame::generateFrame(unsigned char* buffer,int bufferSize){
-    int option_len=this->header.ver_ihl&0x0f*4-20;
-    int data_len=this->header.tot_len-this->header.ver_ihl&0x0f*4;
-    if(bufferSize<sizeof(EthIPHeader)+option_len+data_len){
-        return -1;
-    }
-    memset(buffer,0,bufferSize);
-    memcpy(buffer,&this->header,sizeof(EthIPHeader));
-    if(option_len>0){
-        memcpy(buffer+sizeof(EthIPHeader),this->option,option_len);
-    }
-    if(data_len>0){
-        memcpy(buffer+sizeof(EthIPHeader)+option_len,this->option,data_len);
-    }
-    return 0;
-}
-
-int readIPEthernet(int bufferSize=1600){
-
-    unsigned char inet[]={192,168,31,36};
-    unsigned char ether[]={0x00,0x0c,0x29,0x1f,0x2f,0xf4};
-    unsigned char gateway[]={0x40,0x31,0x3c,0x29,0xad,0xd8};
-    int sock,n,counter=0;
-    unsigned char buffer[bufferSize];
-    if(0>(sock=socket(PF_PACKET,SOCK_RAW,htons(ETH_P_IP)))){
-        perror("socket");
-        return -1;
-    }
-    while (true)
+    this->frameSize = frameSize;
+    this->MTU = frameSize - 14;
+    memcpy((void *)&this->header, frame, sizeof(EthIPHeader));
+    this->version = this->header.verIhl >> 4;
+    this->ihl = this->header.verIhl & 0x0f;
+    this->fragOpt = this->header.fragOff >> 13;
+    this->fragOff = this->header.fragOff && 0x1fff;
+    this->optLen = this->ihl * 4 - 20;
+    if (this->optLen > 0)
     {
-        n=recvfrom(sock,buffer,bufferSize,0,NULL,NULL);
-        if(n<sizeof(EthIPHeader)){
-            //if small than EthIPHeader ,then it's meanless as it does not contain a normal IP packet
-            //which barely happened as we socket ETH_P_IP
-            //but just in case
-            continue;
-        }
-        EthIPFrame eif(buffer,n);
-        if(eif.header.protocol==99){//not icmp 
-            counter++;
-            printf("============================\n");
-            printf("~%d\n",counter);
-            printf("dst_mac");
-            for(int i=0;i<6;i++){
-                printf(":%02x",eif.header.dst_mac[i]);
-            }
-            printf("\n");
-
-            printf("src_mac");
-            for(int i=0;i<6;i++){
-                printf(":%02x",eif.header.src_mac[i]);
-            }
-            printf("\n");
-
-            printf("src_addr:");
-            for(int i=0;i<4;i++){
-                printf("%d",eif.header.src_addr[i]);
-                if(i!=3){
-                    printf(".");
-                }
-            }
-            printf("\n");
-            printf("dst_addr:");
-            for(int i=0;i<4;i++){
-                printf("%d",eif.header.dst_addr[i]);
-                if(i!=3){
-                    printf(".");
-                }
-            }
-            printf("\n");
-            printf("============================\n");
-        }
-        if(counter>=100){
-            close(sock);
-            break;
-        }
+        this->option = new unsigned char[this->optLen];
+        memcpy(this->option, &frame[20], this->optLen);
     }
-    return 0;
+    else
+    {
+        this->option = NULL;
+    }
+    this->fragLen = ((this->MTU - this->ihl) / 8) * 8;
+    if ((this->fragOpt & 2 == 0)     //MF=0
+        || (this->fragOff & 1 == 1)) //DF=1
+    {
+        this->dataLen = this->header.totLen % this->fragLen;
+    }
+    else
+    {
+        this->dataLen = this->fragLen;
+    }
+    if (this->dataLen > 0)
+    {
+        this->data = new unsigned char[this->dataLen];
+        memcpy(this->data, &frame[this->header.verIhl & 0x0f * 4], this->dataLen);
+    }
+    else
+    {
+        this->data = NULL;
+    }
+    this->isChecked = true;
 }
 
-int main(int argc,char** argv){
-    std::cout<<"Hello Courier\n";
-    readIPEthernet();
+EthIPFrame::~EthIPFrame()
+{
+    if (this->option != NULL)
+    {
+        delete[] this->option;
+    }
+    if (this->data != NULL)
+    {
+        delete[] this->data;
+    }
+}
+
+void EthIPFrame::printBinary(unsigned char *binary, unsigned short length, unsigned short columnSize)
+{
+    int index = 0;
+    while (index < length)
+    {
+        int leftToPrint = (length - index) < columnSize ? (length - index) : columnSize;
+        for (int i = 0; i < columnSize; i++)
+        {
+            if (i < leftToPrint)
+            {
+                printf("%02x ", binary[index + i]);
+            }
+            else
+            {
+                printf("   ");
+            }
+        }
+        printf("\t");
+        for (int i = 0; i < columnSize; i++)
+        {
+            if (i < leftToPrint)
+            {
+                if(binary[index + i]==0)
+                {
+                    printf("\\0");
+                }
+                else
+                {
+                    printf("%c ", binary[index + i]);
+                }    
+            }
+            else
+            {
+                break;
+            }
+        }
+        printf("\n");
+        index += columnSize;
+    }
+}
+
+int main()
+{
+    printf("hello Courier!\n");
+    
     return 0;
 }
