@@ -68,7 +68,6 @@ int readIPEthernet(int bufferSize=1600){
     }
     while (true)
     {
-        counter++;
         n=recvfrom(sock,buffer,bufferSize,0,NULL,NULL);
         if(n<sizeof(EthIPHeader)){
             //if small than EthIPHeader ,then it's meanless as it does not contain a normal IP packet
@@ -78,6 +77,7 @@ int readIPEthernet(int bufferSize=1600){
         }
         EthIPFrame eif(buffer,n);
         if(eif.header.protocol==1){//not icmp 
+            counter++;
             printf("============================\n");
             printf("~%d\n",counter);
             printf("dst_mac");
