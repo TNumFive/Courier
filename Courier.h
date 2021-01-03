@@ -48,7 +48,7 @@ private:
     unsigned short fragOff;
     unsigned char optLen;
     unsigned char *option;
-    int dataLen;
+    unsigned short dataLen;
     unsigned char *data;
     unsigned short frameSize;
     unsigned short MTU;
@@ -61,6 +61,9 @@ public:
     //usually MTU=1500 and frame obtained without FCS
     EthIPFrame(unsigned char *frame, unsigned short frameSize = 1514);
     ~EthIPFrame();
+    //setter and getter
+    EthIPHeader getHeader();
+
     void printBinary(unsigned char *binary, unsigned short length, unsigned short columnSize = 4);
     void printFrame();
     int genFrame(unsigned char *frame, unsigned short frameSize);

@@ -65,6 +65,10 @@ EthIPFrame::~EthIPFrame()
     }
 }
 
+EthIPHeader EthIPFrame::getHeader(){
+    return this->header;
+}
+
 void EthIPFrame::printBinary(unsigned char *binary, unsigned short length, unsigned short columnSize)
 {
     int index = 0;
@@ -87,14 +91,14 @@ void EthIPFrame::printBinary(unsigned char *binary, unsigned short length, unsig
         {
             if (i < leftToPrint)
             {
-                if(binary[index + i]==0)
+                if (binary[index + i] == 0)
                 {
                     printf("\\0");
                 }
                 else
                 {
                     printf("%c ", binary[index + i]);
-                }    
+                }
             }
             else
             {
@@ -105,10 +109,103 @@ void EthIPFrame::printBinary(unsigned char *binary, unsigned short length, unsig
         index += columnSize;
     }
 }
+void EthIPFrame::printFrame()
+{
+    printf("src_mac(0x)");
+    for (int i = 0; i < 6; i++)
+    {
+        printf(":%02x", this->header.srcMac[i]);
+    }
+    printf("\n");
+    printf("dst_mac(0x)");
+    for (int i = 0; i < 6; i++)
+    {
+        printf(":%02x", this->header.dstMac[i]);
+    }
+    printf("\n");
+    printf("eth_type(0x):%04x\n", this->header.ethType);
+    printf("version(0x):%02x\n", this->version);
+    printf("ihl(0x):%02x\n", this->ihl);
+    printf("tos(0x):%02x\n", this->header.tos);
+    printf("tot_len(0x):%04x\n", this->header.totLen);
+    printf("id(0x):%04x\n", this->header.id);
+    printf("frag_opt(0x):%02x\n", this->fragOpt);
+    printf("frag_off(0x):%04x\n", this->fragOff);
+    printf("ttl(0x):%02x\n", this->header.ttl);
+    printf("protocol(0x):%02x\n", this->header.protocol);
+    printf("chk_sum(0x):%04x\n", this->header.chkSum);
+    printf("src_addr(d):");
+    for (int i = 0; i < 4; i++)
+    {
+        printf("%d", this->header.srcAddr[i]);
+        if (i != 3)
+        {
+            printf(".");
+        }
+    }
+    printf("\n");
+    printf("dst_addr(d):");
+    for (int i = 0; i < 4; i++)
+    {
+        printf("%d", this->header.dstAddr[i]);
+        if (i != 3)
+        {
+            printf(".");
+        }
+    }
+    printf("\n");
+    if (this->optLen > 0)
+    {
+        printf("option(0x):%04x\n", this->optLen);
+        this->printBinary(this->option, this->optLen, 4);
+    }
+    if (this->dataLen > 0)
+    {
+        printf("data(0x):%04x\n", this->dataLen);
+        this->printBinary(this->data, this->dataLen, 4);
+    }
+}
+
+int readEthIPFrame(unsigned short bufferSize = 1518)
+{
+    int sock, n, counter = 0;
+    unsigned char buffer[bufferSize];
+    if (0 > (sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP))))
+    {
+        perror("socket");
+        return -1;
+    }
+    while (true)
+    {
+        n = recvfrom(sock, buffer, bufferSize, 0, NULL, NULL);
+        if (n < sizeof(EthIPHeader))
+        {
+            //if small than EthIPHeader ,then it's meanless as it does not contain a normal IP packet
+            //which barely happened as we socket ETH_P_IP
+            //but just in case
+            continue;
+        }
+        EthIPFrame eif(buffer, n);
+        if (eif.getHeader().ethType == 99)
+        { //not icmp
+            counter++;
+            printf("============================\n");
+            printf("~%d\n", counter);
+            eif.printFrame();
+            printf("============================\n");
+        }
+        if (counter >= 100)
+        {
+            close(sock);
+            break;
+        }
+    }
+    return 0;
+}
 
 int main()
 {
     printf("hello Courier!\n");
-    
+    readEthIPFrame();
     return 0;
 }
