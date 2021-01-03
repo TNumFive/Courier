@@ -189,14 +189,16 @@ int readEthIPFrame(unsigned short bufferSize = 1514)
         }
         EthIPFrame eif(buffer);
         //if (eif.getHeader().ethType == 99)
-        if (eif.getHeader().protocol == 1)
+        //if (eif.getHeader().protocol == 1)
+        unsigned char phyHost[]={192,168,31,88};
+        if(strncmp((char *)eif.getHeader().srcAddr,(char *)phyHost,4)==0
+            ||strncmp((char *)eif.getHeader().dstAddr,(char *)phyHost,4)==0)
         { //not icmp
             counter++;
             printf("============================\n");
             printf("~%d\n", counter);
             eif.printFrame();
             printf("============================\n");
-            break;
         }
         if (counter >= 100)
         {
