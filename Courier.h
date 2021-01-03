@@ -44,6 +44,7 @@ private:
     EthIPHeader header;
     unsigned char version;
     unsigned char ihl;
+    unsigned char totLen;
     unsigned char fragOpt; //options of fragment
     unsigned short fragOff;
     unsigned char optLen;
